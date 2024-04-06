@@ -1,9 +1,13 @@
 package com.mime.javagame;
 
 import com.mime.javagame.graphics.Render;
+import com.mime.javagame.graphics.Screen;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 
 public class Display extends Canvas implements Runnable {
     public static final int WIDTH = 800;
@@ -11,11 +15,16 @@ public class Display extends Canvas implements Runnable {
     public static final String TITLE = "Java Game";
 
     private Thread thread;
-    private boolean running = false;
     private Render render;
+    private Screen screen;
+    private BufferedImage image;
+    private boolean running = false;
+    private int[] pixels;
 
-    public Display(){
-        render = new Render(WIDTH, HEIGHT);
+    public Display() {
+        screen = new Screen(WIDTH, HEIGHT);
+        image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+        pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
     }
 
     private void start() {
@@ -50,7 +59,21 @@ public class Display extends Canvas implements Runnable {
     }
 
     private void render() {
+        BufferStrategy bufferStrategy = this.getBufferStrategy();
+        if (bufferStrategy == null) {
+            createBufferStrategy(3);
+            return;
+        }
 
+        screen.render();
+
+        for (int i = 0; i < WIDTH * HEIGHT; i++) {
+            pixels[i] = screen.pixels[i];
+        }
+        Graphics graphics = bufferStrategy.getDrawGraphics();
+        graphics.drawImage(image, 0, 0, WIDTH, HEIGHT, null);
+        graphics.dispose();
+        bufferStrategy.show();
     }
 
     public static void main(String[] args) {
